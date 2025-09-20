@@ -20,8 +20,8 @@ const registerUser = asyncHandler(async (req, res) => {
 
   const { email, username, fullName, password } = req.body;
   console.log({
-   body: req.body,
-   files: req.files.avatar[0]
+    body: req.body,
+    files: req.files,
   });
 
   if (
@@ -37,31 +37,37 @@ const registerUser = asyncHandler(async (req, res) => {
   if (exitedUser) {
     throw new ApiError(409, "username and email already exits");
   }
-  const avatarLocalPath = req.files?.avatar[0]?.path;
-  //const coverImagePath = req.files?.coverImage[0]?.path;
 
-  
-   let coverImagePath;
-   if(req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0){
-       coverImagePath = req.files.coverImage[0].path
-   }
-  
+  let coverImagePath;
+  if (
+    req.files &&
+    Array.isArray(req.files.coverImage) &&
+    req.files.coverImage.length > 0
+  ) {
+    coverImagePath = req.files.coverImage[0].path;
+  }
+
+  let avatarLocalPath;
+  if (
+    req.files &&
+    Array.isArray(req.files.avatar) &&
+    req.files.avatar.length > 0
+  ) {
+    avatarLocalPath = req.files.avatar[0].path;
+  }
+
   if (!avatarLocalPath) {
     throw new ApiError(400, " avatar files is required");
   }
-
-
-  // if (!coverImagePath ) {
-  //   throw new ApiError(400, "coverImage is required");
-  // }
-
+  if (!coverImagePath) {
+    throw new ApiError(400, "coverImage is required");
+  }
 
   const avatar = await uploadOnCloudinary(avatarLocalPath);
   const coverImage = await uploadOnCloudinary(coverImagePath);
   if (!avatar) {
     throw new ApiError(400, " avatar  is required");
-   }
-
+  }
 
   //  if (!coverImage) {
   //    throw new ApiError(400, "coverImage files is required ");
@@ -88,4 +94,89 @@ const registerUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, createUser, "user registered successfully"));
 });
 
-export { registerUser };
+const loginUser = asyncHandler(async (req, res) => {
+  // req body - data
+  // username or email
+  //find the user
+  // check the password
+  //access and refresh Token
+  // send the cookie
+
+  const { username, email, password } = req.body;
+  if (!username || !email) {
+    throw new ApiError(400, "username or. email field is required");
+  }
+  const user = await User.findOne({
+    $or: [{ email }, { username }],
+  });
+  if (!user) {
+    throw new ApiError(404, "user is not exits");
+  }
+  const isPasswordValid = await user.isPasswordCorrect(password);
+  if (!isPasswordValid) {
+    throw new ApiError(401, "invalid user is credentails");
+  }
+
+  const {accessToken, refreshToken} = await generateAccessAndRefreshToken(user._id)
+  
+  User.findById(user._id).select("-password -refreshToken")
+
+  // use of cookie
+
+  const options = {
+    httpOnly: true,
+    secure: true
+  }
+
+  return res.status(200).cookie("accessToken", accessToken, options).cookie("refreshToken", refreshToken, options).json(
+    new ApiResponse(200, {
+      user:   loginUser, accessToken, refreshToken
+    },
+    "user logged In Successfully" 
+  )
+  )
+
+});
+
+const generateAccessAndRefreshToken = async (userId) => {
+  try {
+    const user = await User.findById(userId);
+    const accessToken = user.generateAccessToken();
+    const refreshToken = user.generateRefreshToken();
+
+   user.refreshToken = refreshToken
+   user.save( {validateBeforeSave: false})
+
+   return {accessToken, refreshToken}
+
+  } catch (error) {
+    throw new ApiError(
+      500,
+      "Somethin went wrong while generating refresh and access token"
+    );
+  }
+};
+
+const logoutUser = asyncHandler(async(req, res)=>{
+  User.findByIdAndUpdate(
+    req.user._id,
+    {
+       $set:
+       {
+        refreshToken: undefined
+       }
+    },
+    {
+      new: true 
+  
+    }
+  )
+  const options = {
+    httpOnly:true,
+    secure: true
+  }
+  res.status(200).clearcookie("accessToken", options).clearcookie("refreshToken", options).json(
+    new ApiResponse(200, {}, "User logged out")
+  )
+})
+export { registerUser, loginUser, logoutUser };

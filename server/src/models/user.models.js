@@ -9,7 +9,6 @@ const userSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
-      index: true,
       required: true,
     },
     email: {
@@ -29,7 +28,6 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
-      index: true,
     },
     avatar: {
       type: String, // cloudinary url
