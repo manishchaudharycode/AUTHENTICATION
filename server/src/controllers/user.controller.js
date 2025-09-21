@@ -17,7 +17,6 @@ const registerUser = asyncHandler(async (req, res) => {
   // remove password an refresh token field  from resposnse
   // check for user creation
   // return res
-
   const { email, username, fullName, password } = req.body;
   console.log({
     body: req.body,
@@ -102,40 +101,54 @@ const loginUser = asyncHandler(async (req, res) => {
   //access and refresh Token
   // send the cookie
 
-  const { username, email, password } = req.body;
-  if (!username || !email) {
+  const { email, password } = req.body;
+
+  if (!email) {
     throw new ApiError(400, "username or. email field is required");
   }
+
   const user = await User.findOne({
-    $or: [{ email }, { username }],
+    email,
   });
+
   if (!user) {
     throw new ApiError(404, "user is not exits");
   }
+
   const isPasswordValid = await user.isPasswordCorrect(password);
+  console.log(isPasswordValid);
+
   if (!isPasswordValid) {
-    throw new ApiError(401, "invalid user is credentails");
+    throw new ApiError(401, "invalid user is credentials");
   }
 
-  const {accessToken, refreshToken} = await generateAccessAndRefreshToken(user._id)
-  
-  User.findById(user._id).select("-password -refreshToken")
+  const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
+    user._id
+  );
+
+  User.findById(user._id).select("-password -refreshToken");
 
   // use of cookie
-
   const options = {
     httpOnly: true,
-    secure: true
-  }
+    secure: true,
+  };
 
-  return res.status(200).cookie("accessToken", accessToken, options).cookie("refreshToken", refreshToken, options).json(
-    new ApiResponse(200, {
-      user:   loginUser, accessToken, refreshToken
-    },
-    "user logged In Successfully" 
-  )
-  )
-
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+      new ApiResponse(
+        200,
+        {
+          user: loginUser,
+          accessToken,
+          refreshToken,
+        },
+        "user logged In Successfully"
+      )
+    );
 });
 
 const generateAccessAndRefreshToken = async (userId) => {
@@ -144,11 +157,10 @@ const generateAccessAndRefreshToken = async (userId) => {
     const accessToken = user.generateAccessToken();
     const refreshToken = user.generateRefreshToken();
 
-   user.refreshToken = refreshToken
-   user.save( {validateBeforeSave: false})
+    user.refreshToken = refreshToken;
+    user.save({ validateBeforeSave: false });
 
-   return {accessToken, refreshToken}
-
+    return { accessToken, refreshToken };
   } catch (error) {
     throw new ApiError(
       500,
@@ -157,26 +169,21 @@ const generateAccessAndRefreshToken = async (userId) => {
   }
 };
 
-const logoutUser = asyncHandler(async(req, res)=>{
-  User.findByIdAndUpdate(
-    req.user._id,
-    {
-       $set:
-       {
-        refreshToken: undefined
-       }
-    },
-    {
-      new: true 
+const logoutUser = asyncHandler(async (req, res) => {
+  console.log("DSF/fwa",req.user._id);
   
-    }
-  )
+  await User.findByIdAndUpdate(req.user._id,{
+    refreshToken:""
+  })
+
   const options = {
-    httpOnly:true,
-    secure: true
-  }
-  res.status(200).clearcookie("accessToken", options).clearcookie("refreshToken", options).json(
-    new ApiResponse(200, {}, "User logged out")
-  )
-})
+    httpOnly: true,
+    secure: true,
+  };
+  res
+    .status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(new ApiResponse(200, {}, "User logged out"));
+});
 export { registerUser, loginUser, logoutUser };
