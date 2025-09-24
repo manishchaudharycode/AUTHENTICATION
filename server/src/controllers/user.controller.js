@@ -300,7 +300,7 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
 
 //import { v2 as cloudinary } from "cloudinary";
 
-const avatarUserUpate = asyncHandler(async (req, res) => {
+const avatarUserUpdate = asyncHandler(async (req, res) => {
   const avatarLocalPath = req.file?.path;
   if (!avatarLocalPath) {
     throw new ApiError(400, "Avatar is missing");
@@ -454,7 +454,7 @@ export {
   updateUserCoverImage,
   getCurrentUser,
   updateAccountDetails,
-  avatarUserUpate,
+  avatarUserUpdate,
   getWatchHistory,
   getUserChannelProfile,
 };
