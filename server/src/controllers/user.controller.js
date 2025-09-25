@@ -7,6 +7,7 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
+import bcrypt from "bcrypt";
 
 const registerUser = asyncHandler(async (req, res) => {
   // get user details from frontend
@@ -117,7 +118,9 @@ const loginUser = asyncHandler(async (req, res) => {
     throw new ApiError(404, "user is not exits");
   }
 
-  const isPasswordValid = await user.isPasswordCorrect(password);
+  const isPasswordValid = user.isPasswordCorrect(password);
+  console.log("is", isPasswordValid);
+
   console.log(isPasswordValid);
 
   if (!isPasswordValid) {
@@ -234,21 +237,21 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   }
 });
 
-const changeCrrentPassword = asyncHandler(async (req, res) => {
+const changeCurrentPassword = asyncHandler(async (req, res) => {
   const { oldPassword, currentPassword } = req.body;
 
   const user = await User.findById(req.user?.id);
   const isPasswordCorrect = user.isPasswordCorrect(oldPassword);
   if (!isPasswordCorrect) {
-    throw new ApiError(400, "unvalid old password");
-
-    user.password = newPassword;
-    const s = await user.save({ validateBeforeSave: false });
-
-    return res
-      .status(200)
-      .json(new ApiResponse(200, {}, "password change successfully"));
+    throw new ApiError(400, "invalid old password");
   }
+
+  user.password = currentPassword;
+  await user.save();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "password change successfully"));
 });
 
 const getCurrentUser = asyncHandler(async (req, res) => {
@@ -298,7 +301,6 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
     .json(new ApiResponse(user, "coverImage uploading successfully"));
 });
 
-//import { v2 as cloudinary } from "cloudinary";
 
 const avatarUserUpdate = asyncHandler(async (req, res) => {
   const avatarLocalPath = req.file?.path;
@@ -331,51 +333,53 @@ const avatarUserUpdate = asyncHandler(async (req, res) => {
 });
 
 const getWatchHistory = asyncHandler(async (req, res) => {
-  const   user = await User.aggregate(
-    [
-      {
-        $match:{
-            _id: new mongoose.Types.ObjectId(req.user?._id)
-        }
+  const user = await User.aggregate([
+    {
+      $match: {
+        _id: new mongoose.Types.ObjectId(req.user?._id),
       },
-      {
-        $lookup: {
-            from:"videos",
-            foreignField:"_id",
-            localField:"watchHistory",
-            as:"watchHistory",
-            pipeline:[
-              {
-                $lookup:{
-                  from:"users",
-                  localField:"owner",
-                  foreignField:"_id",
-                  as:"owner",
-                  pipeline:[
-                    {
-                      $project:{
-                        fullName: 1,
-                        avatar: 1,
-                        username: 1
-                      }
-                    }
-                  ]
-                }
+    },
+    {
+      $lookup: {
+        from: "videos",
+        foreignField: "_id",
+        localField: "watchHistory",
+        as: "watchHistory",
+        pipeline: [
+          {
+            $lookup: {
+              from: "users",
+              localField: "owner",
+              foreignField: "_id",
+              as: "owner",
+              pipeline: [
+                {
+                  $project: {
+                    fullName: 1,
+                    avatar: 1,
+                    username: 1,
+                  },
+                },
+              ],
+            },
+          },
+          {
+            $addFields: {
+              owner: {
+                $first: "$owner",
               },
-              {
-                $addFields:   {
-                  owner:{
-                    $first: "$owner"
-                  }
-
-                }
-              }
-            ]
-        }
+            },
+          },
+        ],
       },
-    ])
+    },
+  ]);
 
-    return res.status(200).json( new ApiResponse(user[0].WatchHistory, "wtachHistory fetched successfully"))
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(user[0].WatchHistory, "wtachHistory fetched successfully")
+    );
 });
 
 const getUserChannelProfile = asyncHandler(async (req, res) => {
@@ -413,36 +417,38 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         channelsSubscribedToCount: {
           $size: "$subscribedTo",
         },
-        isSubscribed:{
+        isSubscribed: {
           $cond: {
-              if: { 
-                $in: [req.user?._id, "$subscribers.subcriber"]},
-                then: true,
-                else: false
-          }
-        }
+            if: {
+              $in: [req.user?._id, "$subscribers.subcriber"],
+            },
+            then: true,
+            else: false,
+          },
+        },
       },
-   },
+    },
     {
-    $project: {
-      fullName: 1,
-      username:1, 
-      email: 1,
-      avatar: 1,
-      coverImage: 1,
-      subscribersCount: 1,
-      channelsSubscribedToCount: 1,
-      isSubscribed: 1 
-    }
-   }
-  ])
+      $project: {
+        fullName: 1,
+        username: 1,
+        email: 1,
+        avatar: 1,
+        coverImage: 1,
+        subscribersCount: 1,
+        channelsSubscribedToCount: 1,
+        isSubscribed: 1,
+      },
+    },
+  ]);
   if (!channel?.length) {
-    throw new ApiError(400, "Channel is not exits")
+    throw new ApiError(400, "Channel is not exits");
   }
-   return res.status(200).json(
-    new ApiResponse(200, channel[0], "User channel fetched successfully")
-   )
-
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, channel[0], "User channel fetched successfully")
+    );
 });
 
 export {
@@ -450,7 +456,7 @@ export {
   loginUser,
   logoutUser,
   refreshAccessToken,
-  changeCrrentPassword,
+  changeCurrentPassword,
   updateUserCoverImage,
   getCurrentUser,
   updateAccountDetails,

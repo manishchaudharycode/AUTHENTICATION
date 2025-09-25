@@ -48,14 +48,27 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+
 userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
-  this.password = await bcrypt.hash(this.password, 10);
-  next();
+  try {
+    if (!this.isModified("password")) return next();
+    
+    if (!this.password) {
+      return next(new Error("Password is missing"));
+    }
+
+    this.password = await bcrypt.hash(this.password, 10);
+    next();
+  } catch (err) {
+    next(err);
+  }
 });
 
+
 userSchema.methods.isPasswordCorrect = async function (password) {
-  return await bcrypt.compare(password, this.password);
+  const compare = await bcrypt.compare(password, this.password);
+  return compare
+  
 };
 
 userSchema.methods.generateAccessToken = function () {
