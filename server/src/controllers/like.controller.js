@@ -68,8 +68,14 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
 
 const getLikedVideos = asyncHandler(async (req, res) => {
     //TODO: get all liked videos
-    const {videoId} = req.params
-        
+  const userId = req.user?.id
+  if (!userId || !isValidObjectId(userId)) {
+    throw new ApiError(400, "user is invalid")
+  }
+  const videoLike = await Like.find({user: userId, video:{$exists: true}}).populate("video").populate({Path: video, populate: {Path: owner , select: "username email"}})
+
+  return res.status(200).json(new ApiResponse(200, videoLike,  "Total like Count successfully"))
+      
 })
 
 export {
