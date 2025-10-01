@@ -1,12 +1,12 @@
-import { HomePage } from "@/components/homePage/homePage"
-import { SideNavbar } from "@/components/sideNavbar/sideNavbar"
+import { SideNavbar } from "@/components/sideNavbar/sideNavbar";
 
- export function Home() {
+export function Home() {
   return (
-    <div>
-      <SideNavbar/>
-      <HomePage />
+    <div className="flex mt-10 ml-10  ">
+      <SideNavbar />
+      <div>
+        
+      </div>
     </div>
-  )
+  );
 }
-

@@ -1,62 +1,76 @@
-import { MenuIcon, SearchIcon } from "lucide-react";
-import YouTubeIcon from "@mui/icons-material/YouTube";
-import KeyboardVoiceIcon from "@mui/icons-material/KeyboardVoice";
-import VideoCallIcon from "@mui/icons-material/VideoCall";
-import NotificationsIcon from "@mui/icons-material/Notifications";
 import { useState } from "react";
-import Button from "@mui/material/Button";
+import { Menu, Search, Mic, Video, Bell } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { IconBrandYoutubeFilled } from "@tabler/icons-react";
+import { useNavigate } from "react-router-dom";
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
-
-  const handleClickMode = () => {
-    setOpen((prev) => !prev); //
-  };
+  const navigate = useNavigate();
 
   return (
-    <div className="navbar flex  mt-5 ">
-      <div className=" flex items-center gap-6  ml-12">
-        <div className="">
-          <MenuIcon />
-        </div>
-        <div className="flex items-center ">
-          <YouTubeIcon fontSize="large" className="text-red-700 " />
+    <div className="navbar flex items-center justify-between px-12 mt-5">
+      {/* Left section */}
+      <div className="flex items-center gap-6">
+        <Menu className="cursor-pointer" />
+        <div className="flex items-center font-semibold text-lg">
+          <IconBrandYoutubeFilled className="text-red-600" />
           YouTube
         </div>
       </div>
-      <div className="flex  ">
-        <div className="flex items-center ml-60  ">
-          <input
-            type="text"
-            placeholder="Search"
-            className="flex-1 outline-none bg-transparent border rounded-bl-full rounded-tl-full  px-3 py-1 w-140 "
-          />
-          <div className="border py-1 px-5  rounded-br-full rounded-tr-full bg-neutral-600/95 text-black ">
-            <SearchIcon className="text-white" />
-          </div>
-          <div className="flex border outline-none p-1 bg-neutral-600 rounded-full ml-6">
-            <KeyboardVoiceIcon />
-          </div>
+
+      <div className="flex items-center">
+        <input
+          type="text"
+          placeholder="Search"
+          className="flex-1 outline-none border border-neutral-500 bg-transparent rounded-l-full px-3 py-1 w-96"
+        />
+        <div className="border border-neutral-500 px-5 py-1.5 rounded-r-full bg-neutral-600 text-white cursor-pointer">
+          <Search className="h-5 w-5 " />
+        </div>
+        <div className="flex p-2 bg-neutral-600 rounded-full ml-4 cursor-pointer">
+          <Mic className="h-5 w-5 text-white" />
         </div>
       </div>
-      <div className="flex  items-center ml-32 gap-10">
-        <VideoCallIcon fontSize="large" />
-        <NotificationsIcon fontSize="large" />
-        <img
-          onClick={handleClickMode}
-          src="https://imgs.search.brave.com/zMHdiWHkzhpWvwSuznZrhKA_X-P3omVlmVrR_Id4hf8/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly90My5m/dGNkbi5uZXQvanBn/LzE2LzA1LzQ1LzM2/LzM2MF9GXzE2MDU0/NTM2MTlfZGxOUWFl/ZjNCbmEwdTdKRTVV/blpmUmp6clRxeVlr/WWguanBn"
-          alt="profile"
-          className="w-10 h-10 rounded-full object-cover"
-        />
-        {open && (
-          <div className="absolute top-14 right-0 bg-neutral-600 mr-10 shadow-lg rounded-lg w-32 flex flex-col text-center py-2">
 
-              <Button className="py-3 hover:bg-neutral-400 ">Login</Button>
-          
 
-           <button className=" py-3 hover:bg-neutral-400">Logout</button>
-          </div>
-        )}
+      <div className="flex items-center gap-6">
+        <Video className="h-7 w-7 cursor-pointer" />
+        <Bell className="h-7 w-7 cursor-pointer" />
+
+        <DropdownMenu open={open} onOpenChange={setOpen}>
+          <DropdownMenuTrigger asChild>
+            <Avatar className="cursor-pointer">
+              <AvatarImage src="https://imgs.search.brave.com/zMHdiWHkzhpWvwSuznZrhKA_X-P3omVlmVrR_Id4hf8/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly90My5m/dGNkbi5uZXQvanBn/LzE2LzA1LzQ1LzM2/LzM2MF9GXzE2MDU0/NTM2MTlfZGxOUWFl/ZjNCbmEwdTdKRTVV/blpmUmp6clRxeVlr/WWguanBn" />
+              <AvatarFallback>U</AvatarFallback>
+            </Avatar>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-40 bg-neutral-700 text-white">
+            <DropdownMenuItem>
+              <Button
+                onClick={() => {
+                  navigate("/sigin");
+                }}
+                className="w-full"
+                variant="ghost"
+              >
+                Login
+              </Button>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Button className="w-full" variant="ghost">
+                Logout
+              </Button>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );

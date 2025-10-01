@@ -5,7 +5,7 @@ import { MdOutlineSubscriptions } from "react-icons/md";
 
 export function SideNavbar() {
   return (
-    <div className="w-1/15 h-screen   ">
+    <div className="w-30 h-screen mt-2    ">
       <div className="   gap-4  mt-2 ml-4 border w-25 px-5 py-6 rounded-xl  hover:bg-neutral-700 border-none">
         <HomeIcon fontSize="medium" className="cursor-pointer ml-2 " />
         <p className="cursor-pointer">Home</p>

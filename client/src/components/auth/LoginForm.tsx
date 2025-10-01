@@ -3,7 +3,6 @@ import { useState } from "react"
 import axios from "axios"
 import {
   Card,
-  CardAction,
   CardContent,
   CardDescription,
   CardFooter,
@@ -18,7 +17,7 @@ export function LoginForm() {
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
 
-  const handleLogin = async (e) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const res = await axios.post("http://localhost:5000/api/login", {
@@ -27,7 +26,8 @@ export function LoginForm() {
       });
       setMessage("✅ Login successful!");
       console.log(res.data); // yaha aap token ya user data save kar sakte ho
-    } catch (err) {
+    } catch (err: unknown) {
+      console.log(err);
       setMessage("❌ Login failed. Check your credentials.");
     }
   };
@@ -38,9 +38,6 @@ export function LoginForm() {
         <CardDescription>
           Enter your email below to login to your account
         </CardDescription>
-        <CardAction>
-          <Button variant="link">Sign Up</Button>
-        </CardAction>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleLogin} className="space-y-4">
