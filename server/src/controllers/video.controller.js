@@ -1,47 +1,65 @@
-import mongoose, { isValidObjectId } from "mongoose";
-import { Video } from "../models/video.model.js";
-import { User } from "../models/user.model.js";
-import { ApiError } from "../utils/ApiError.js";
+import  { isValidObjectId } from "mongoose";
+import { Video } from "../models/video.models.js";
+import {ApiError} from "../utils/apiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
 const getAllVideo = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 10, Query, sortBy, sortType, userId } = req.Query;
-  // TODO : get all videos based on query, sort, pagination
+  let { page = 1, limit = 10, query, sortBy = "createdAt", sortType = "desc", userId } = req.query;
+
+  page = parseInt(page);
+  limit = parseInt(limit);
+
+  const filter = {};
+
+  if (query) {
+    filter.title = { $regex: query, $options: "i" }; 
+  }
+
+  if (userId) {
+    filter.user = userId; 
+  }
+
+  const sort = {};
+  sort[sortBy] = sortType === "asc" ? 1 : -1;
+  const total = await Video.countDocuments(filter);
+  const videos = await Video.find(filter)
+    .sort(sort)
+    .skip((page - 1) * limit)
+    .limit(limit);
+
+  res.status(200).json({
+    page,
+    limit,
+    total,
+    totalPages: Math.ceil(total / limit),
+    videos,
+  });
 });
 
+export default getAllVideo;
+
 const publishAVideo = asyncHandler(async (req, res) => {
-  // TODO : get video, upload to cloudinary , create video
-  const { title, description } = re.body;
+  const { title, description, videoUrl, streamUrl, duration, isPublished } = req.body;
   if (!title) {
     throw new ApiError(400, "Tilte is required");
   }
-  if (!req.files?.videoFile) {
-    throw new ApiError(400, "Video file is required");
-  }
-
-  const videoPath = req.files?.videoFile[0].path;
   const thumbnailPath = req.files?.thumbnail?.[0]?.path;
-
-  const videoUpload = await uploadOnCloudinary(videoPath, {
-    resource_type: "video",
-  });
-  if (!videoUpload) {
-    throw new ApiError(400, " video not uploaded ");
-  }
-
-  const thumbnailUpload = thumbnailPath
-    ? await uploadOnCloudinary(thumbnailPath)
-    : null;
+  
+  const thumbnailUpload = await uploadOnCloudinary(thumbnailPath)
+  console.log(thumbnailUpload);
+  
 
   const video = await Video.create({
     title,
     description,
-    videoUrl: videoUpload.secure_url,
-    videoPublicId: videoUpload.public_id,
-    thumbnailUrl: thumbnailUpload.secure_url,
-    thumbnailPublicId: thumbnailUpload.public_id,
+    videoUrl,
+    streamUrl,
+    duration,
+    isPublished,
+    views:0,
+    thumbnail: thumbnailUpload.secure_url,
     user: req.user.id,
   });
 
@@ -53,7 +71,7 @@ const publishAVideo = asyncHandler(async (req, res) => {
 const getVideoById = asyncHandler(async (req, res) => {
   // TODO : get video by id
     const {videoId} = req.params
-    if (!videoId) {
+    if (!videoId || !isValidObjectId(videoId))  {
     throw new ApiError(400, "video ID not found")
     }
 
@@ -65,10 +83,10 @@ const getVideoById = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, "video is upload successfully"))
 });
 
-const upadateVideo = asyncHandler(async (req, res) => {
+const updateVideo = asyncHandler(async (req, res) => {
   // TODO :   update video details like title, description, thumbnail
   const { videoId } = req.params;   
-  if (!videoId) {
+  if (!videoId || !isValidObjectId(videoId))  {
     throw new ApiError(400, "Video ID not found")
   }
    const video = await Video.findById(videoId)
@@ -100,7 +118,7 @@ const upadateVideo = asyncHandler(async (req, res) => {
 const deleteVideo = asyncHandler(async (req, res) => {
   // TODO : delete video
   const { videoId } = req.params;
-  if (!videoId) {
+  if (!videoId || !isValidObjectId(videoId))  {
     throw new ApiError(400, "video ID not found")
   }
 
@@ -120,7 +138,7 @@ return res.status(200).json(new ApiResponse(200, "video deleted success"))
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
-  if (!videoId) {
+  if (!videoId || !isValidObjectId(videoId)) {
     throw new ApiError(400, "Video ID not found")
   }
 
@@ -144,7 +162,7 @@ export {
   getAllVideo,
   publishAVideo,
   getVideoById,
-  upadateVideo,
+  updateVideo,
   deleteVideo,
   togglePublishStatus,
 }

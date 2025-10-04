@@ -1,27 +1,43 @@
-import Router from "express"
-import verifyJWT from "../middlewares/auth.middleware"
-import { deleteVideo, getAllVideo, getVideoById, publishAVideo, togglePublishStatus, upadateVideo } from "../controllers/video.controller";
-import { upload } from "../middlewares/multer";
+import { Router } from "express"
+import {
+  deleteVideo,
+  getAllVideo,
+  getVideoById,
+  publishAVideo,
+  togglePublishStatus,
+  updateVideo, // Fixed typo: upadateVideo -> updateVideo
+} from "../controllers/video.controller.js"
+import { verifyJWT } from "../middlewares/auth.middleware.js"
+import { upload } from "../middlewares/multer.js"
+
+export const videoRouter = Router()
+
+// Protect all routes
+videoRouter.use(verifyJWT)
+
+// List all videos
+videoRouter.get("/", getAllVideo)
 
 
-const router = Router();
-router.use(verifyJWT)
+videoRouter.post(
+  "/",
+  upload.fields([
+    {
+      name: "thumbnail",
+      maxCount: 1,
+    },
+  ]),
+  publishAVideo,
+)
 
-router.route("/").get(getAllVideo)
-router.route("/").post(
-    upload.fields([
-        {
-            name: "videofile",
-            maxCount: 1
-        },
-        {
-            name: "thumbnail",
-            maxCount: 1,
-        }
-    ]),
-    publishAVideo
-);
-router.route("/:videoId").get(getVideoById);
-router.route("/:videoId").delete(deleteVideo);
-router.route("/:videoId").patch(upload.single("thumbnail"), upadateVideo);
-router.route("toggle/publish/:videoId").patch(togglePublishStatus)
+// Get a video by id
+videoRouter.get("/:videoId", getVideoById)
+
+// Delete a video by id
+videoRouter.delete("/:videoId", deleteVideo)
+
+// Update a video's title/description and optional thumbnail
+videoRouter.patch("/:videoId", upload.single("thumbnail"), updateVideo)
+
+// Toggle publish status
+videoRouter.patch("/toggle/publish/:videoId", togglePublishStatus)
