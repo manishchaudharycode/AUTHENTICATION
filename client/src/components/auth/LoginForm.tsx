@@ -10,12 +10,16 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { API_URL } from "@/config/config"
 import { toast } from "sonner"
+import { Link, useNavigate } from "react-router-dom"
+
 
 
 export function LoginForm() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const navigate = useNavigate()
+
 
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -27,20 +31,20 @@ export function LoginForm() {
     try {
       setIsSubmitting(true)
       const res = await axios.post(`${API_URL}/users/login`, { email, password })
-      // Optionally persist token/user
-      const token = (res )?.data?.token
-      if (token) {
+      console.log(res.data);
+      
+      const data = res.data.data;
+
+      if (data.accessToken && data.refreshToken) {
         try {
-          localStorage.setItem("token", token)
+          localStorage.setItem("accessToken", data.accessToken)
+          localStorage.setItem("refreshToken",data.refreshToken)
+          toast.success("Login successful")
+          navigate("/")
         } catch (error){
-          console.log(error, );
-          
+          console.log(error);
         }
       }
-      toast.success("Login successful")
-
-      // Optional: redirect after login
-      // window.location.href = "/"
     } catch (err) {
       console.error(err)
       toast.error("Login failed. Check your credentials.")
@@ -50,8 +54,10 @@ export function LoginForm() {
     }
   }
 
+
+
   return (
-    <Card className="w-full max-w-sm">
+    <Card className="w-full  max-w-sm">
       <CardHeader>
         <CardTitle className="text-balance">Login to your account</CardTitle>
         <CardDescription>Enter your email and password to continue.</CardDescription>
@@ -60,7 +66,7 @@ export function LoginForm() {
       <CardContent>
         <form onSubmit={handleLogin} className="space-y-4">
           <div className="grid gap-6">
-            <div className="grid gap-2">
+            <div className="grid gap-2 ">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
@@ -104,9 +110,9 @@ export function LoginForm() {
         </Button>
         <p className="mt-2 text-center text-sm">
           Don’t have an account?{" "}
-          <a href="/signup" className="text-primary font-medium underline-offset-4 hover:underline">
+          <Link to="/signup" className="text-primary font-medium underline-offset-4 hover:underline">
             Sign Up
-          </a>
+          </Link>
         </p>
       </CardFooter>
     </Card>

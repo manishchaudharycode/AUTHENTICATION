@@ -1,4 +1,4 @@
-"use client"
+
 
 import type React from "react"
 import { useEffect, useMemo, useState } from "react"
@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { API_URL } from "@/config/config"
+import { Link, useNavigate } from "react-router-dom"  
 
 export function SignupForm() {
   const [email, setEmail] = useState("")
@@ -21,6 +22,7 @@ export function SignupForm() {
 
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
   const [coverPreview, setCoverPreview] = useState<string | null>(null)
+  const navigate = useNavigate()  
 
   useEffect(() => {
     if (!avatar) {
@@ -72,17 +74,15 @@ export function SignupForm() {
     try {
       setIsSubmitting(true)
       const res = await axios.post(`${API_URL}/users/register`, form)
-      // You can persist token/user data from res.data if needed
-      if (res.status === 200) {
-        
+      if (res.status === 200 || res.status===201) {
         toast.success("Signup successful!")
-        // Optional: reset
         setEmail("")
         setUserName("")
         setFullName("")
         setPassword("")
         setAvatar(null)
         setCoverImage(null)
+        navigate("/signin")
       }
     } catch (err: unknown) {
       console.error(err)
@@ -93,7 +93,7 @@ export function SignupForm() {
   }
 
   return (
-    <Card className="w-full max-w-2xl">
+    <Card className="w-full max-w-2xl ">
       <CardHeader className="pb-2">
         <CardTitle className="text-balance">Create your account</CardTitle>
         <CardDescription>Upload your cover and avatar, then fill in your details.</CardDescription>
@@ -232,9 +232,9 @@ export function SignupForm() {
 
             <p className="mt-2 text-center text-sm text-muted-foreground">
               Already have an account?{" "}
-              <a href="/signin" className="text-primary font-medium underline-offset-4 hover:underline">
+              <Link to="/signin" className="text-primary font-medium underline-offset-4 hover:underline">
                 Login
-              </a>
+              </Link>
             </p>
           </CardFooter>
         </form>

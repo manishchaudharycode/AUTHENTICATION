@@ -1,8 +1,8 @@
-import {VideoUpload} from "@/components/videoUploder/videoLoad"
+import {VideoUpload} from "@/components/videoUploder/videoUpLoad"
 
 export default function UploadPage() {
   return (
-    <main className="mx-auto max-w-3xl px-4 py-10">
+    <main className="mx-auto max-w-7xl px-4 py-10">
       <header className="mb-6">
         <h1 className="text-2xl font-semibold text-balance">Video Uploader</h1>
         <p className="text-sm text-muted-foreground">

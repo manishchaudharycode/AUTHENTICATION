@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Menu, Search, Mic, Video, Bell } from "lucide-react";
+import { Search, Mic, Video, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -16,10 +16,8 @@ export function Navbar() {
   const navigate = useNavigate();
 
   return (
-    <div className="navbar flex items-center justify-between px-12 mt-5">
-      {/* Left section */}
+    <div className="navbar flex items-center justify-between px-6 py-4">
       <div className="flex items-center gap-6">
-        <Menu className="cursor-pointer" />
         <div className="flex items-center font-semibold text-lg">
           <IconBrandYoutubeFilled className="text-red-600" />
           YouTube
